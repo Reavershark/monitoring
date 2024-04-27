@@ -27,7 +27,7 @@ template queryMixin(Methods...) if (Methods.length > 0)
 
     import vibe.data.json : deserializeJson, Json, serializeToJson, serializeToJsonString;
 
-    SumType!(GraphNode, Json) query(in GraphPathSegment segment, bool lastSegment) @safe
+    SumType!(GraphNode, Json) query(in GraphPathSegment segment, bool lastSegment)
     {
         enum bool implementsGraphNodeImpl(T : GraphNode) = true;
         enum bool implementsGraphNode(T) = __traits(compiles, implementsGraphNodeImpl!T);
@@ -81,8 +81,12 @@ template queryMixin(Methods...) if (Methods.length > 0)
                         .map!(i => f!"arg_%d"(i))
                         .join(", ");
 
-                    enum returnGraphNodeCode = f!"return typeof(return)(cast(GraphNode) %s(%s));"(MethodName, argsToMixin);
-                    enum returnJsonCode = f!"return typeof(return)(%s(%s).serializeToJson);"(MethodName, argsToMixin);
+                    enum returnGraphNodeCode = f!"return typeof(return)(cast(GraphNode) %s(%s));"(
+                            MethodName, argsToMixin
+                        );
+                    enum returnJsonCode = f!"return typeof(return)(serializeToJson(%s(%s)));"(
+                            MethodName, argsToMixin
+                        );
 
                     // Finally, generate the method call
                     static if (implementsGraphNode!(ReturnType!Method))
@@ -105,7 +109,13 @@ template queryMixin(Methods...) if (Methods.length > 0)
 
 template emptyQueryMixin()
 {
-    Json query(in GraphPathSegment _)
+    import monitoring.resource_graph.graph : GraphNode, GraphPathSegment;
+
+    import std.sumtype : SumType;
+
+    import vibe.data.json : Json;
+
+    SumType!(GraphNode, Json) query(in GraphPathSegment _, bool isLastSegment)
     {
         assert(false, "This GraphNode has no query methods");
     }

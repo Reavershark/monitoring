@@ -1,4 +1,4 @@
-module monitoring.scripts;
+module monitoring.script;
 
 import monitoring.resource_graph.graph : GraphNode;
 import monitoring.resource_graph.mixins;
@@ -14,6 +14,7 @@ import std.string : capitalize;
 import std.uuid : randomUUID;
 
 import vibe.data.json : Json;
+import vibe.data.bson;
 
 @safe:
 
@@ -41,27 +42,6 @@ final class Script : GraphNode
     string uuid() const pure => m_uuid;
     ScriptType type() const pure => m_type;
     string source() const pure => m_source;
-
-    Json toJson() const
-    {
-        Json json = Json.emptyObject;
-        json["uuid"] = uuid;
-        json["type"] = type;
-        json["source"] = source;
-        return json;
-    }
-
-    static typeof(this) fromJson(in Json json)
-    {
-        auto instance = new typeof(this)(
-            json["type"].get!string
-                .capitalize
-                .to!ScriptType,
-            json["source"].get!string
-        );
-        instance.m_uuid = json["uuid"].get!string;
-        return instance;
-    }
 
     Json run()
     {
@@ -103,7 +83,8 @@ final class Script : GraphNode
     {
         if (m_tempFile is null)
         {
-            m_tempFile = new TempFile("rdmd_" ~ cast(string) Base64.encode(cast(ubyte[]) m_uuid.dup) ~ ".d");
+            m_tempFile = new TempFile(
+                "rdmd_" ~ cast(string) Base64.encode(cast(ubyte[]) m_uuid.dup) ~ ".d");
             m_tempFile.file.write(m_source);
             m_tempFile.file.flush;
             m_tempFile.file.close;
@@ -141,4 +122,63 @@ final class Script : GraphNode
     }
 
     mixin queryMixin!(run);
+
+    Json toJson() const
+    {
+        Json json = Json.emptyObject;
+        json["uuid"] = uuid;
+        json["type"] = type;
+        json["source"] = source;
+        return json;
+    }
+
+    static Script fromJson(Json json)
+    {
+        auto instance = new typeof(this)(
+            json["type"].get!string
+                .capitalize
+                .to!ScriptType,
+            json["source"].get!string
+        );
+        instance.m_uuid = json["uuid"].get!string;
+        return instance;
+    }
+}
+
+final class ScriptManager : GraphNode
+{
+    private Script[string] m_scripts;
+
+    this()
+    {
+    }
+
+    string[] listScripts() const
+    {
+        return m_scripts.keys;
+    }
+
+    string createScript(string type, string source)
+    {
+        Script script = new Script(type.capitalize.to!ScriptType, source);
+        m_scripts[script.uuid] = script;
+        return script.uuid;
+    }
+
+    Script getScript(string uuid)
+    {
+        enforce(uuid in m_scripts);
+        return m_scripts[uuid];
+    }
+
+    bool removeScript(string uuid)
+    {
+        enforce(uuid in m_scripts);
+        m_scripts.remove(uuid);
+        return true;
+    }
+
+    mixin queryMixin!(
+        listScripts, getScript, createScript, removeScript,
+    );
 }

@@ -21,12 +21,10 @@ class WebServer
 	    m_router = new URLRouter;
         m_httpServerSettings = new HTTPServerSettings;
 
-	    m_router.get("/index.html", serveStaticFiles("./public/"));
 	    m_router.get("/ws", handleWebSockets((scope WebSocket s) => new WebSocketHandler(s).run()));
-	    m_router.get("*", staticRedirect("/index.html"));
 
 	    m_httpServerSettings.bindAddresses = ["::1", "127.0.0.1"];
-	    m_httpServerSettings.port = 8080;
+	    m_httpServerSettings.port = 3001;
     }
 
     void run()
