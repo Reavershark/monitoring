@@ -1,0 +1,12 @@
+name "monitoring"
+buildType "debug" {
+	buildOptions "debugMode" "debugInfo"
+}
+buildType "release" {
+	buildOptions "releaseMode" "inline" "optimize"
+}
+dependency "vibe-d" version="~>0.10.0"
+dependency "silly" version="~>1.1.1"
+dependency "pyd" version="~>0.14.4"
+targetType "executable"
+subConfiguration "pyd" "python311"
