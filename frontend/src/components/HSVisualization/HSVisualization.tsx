@@ -16,7 +16,7 @@ export default function HSVisualization({ definition }: Props) {
         definition.title = { text: "(No Title)" }
     }
     return (
-        <div className='container'>
+        <div>
             <HighchartsReact
                 highcharts={Highcharts}
                 options={definition}

@@ -50,16 +50,11 @@ void rdfDiscoverAll()
             return result;
         }
 
-        foreach (Json scriptJson; json["scripts"].get!(Json[]))
-        {
-            scriptJson["source"] = replaceTemplateVars(scriptJson["source"].get!string);
-            gr.scriptManager.createScriptFromJson(scriptJson);
-        }
+        json["scripts"] = replaceTemplateVars(json["scripts"].toString).parseJsonString;
+        json["dashboard"] = replaceTemplateVars(json["dashboard"].toString).parseJsonString;
 
-        foreach(ref Json elJson; json["dashboard"]["elements"].get!(Json[]))
-        {
-            elJson["definition"] = replaceTemplateVars(elJson["definition"].get!string);
-        }
+        foreach (Json scriptJson; json["scripts"].get!(Json[]))
+            gr.scriptManager.createScriptFromJson(scriptJson);
 
         gr.dashboardManager.createDashboardFromJson(json["dashboard"]);
     }

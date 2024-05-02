@@ -47,7 +47,7 @@ export default function Dashboard({ uri }: Props) {
                 ]
             });
         }
-    }, [uri]);
+    }, [uri, sendJsonMessage]);
 
     useEffect(() => {
         const msg: any = lastJsonMessage
@@ -67,6 +67,7 @@ export default function Dashboard({ uri }: Props) {
             <div>
                 {dashboard.elements.map(el =>
                     <HSVisualization
+                        /* TODO: Support divStyle along with hs definition */
                         definition={JSON.parse(el.definition)}
                         key={i++}
                     />

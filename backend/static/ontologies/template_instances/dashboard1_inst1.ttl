@@ -14,4 +14,4 @@ this:instance
 this:arg_polygon_value
     a core:DashboardTemplateArgumentValue ;
     core:setsArgument dashboard1:arg_polygon ;
-    core:value "[[1,1], [1,2], [2,2]]" .
+    core:value "[[0,0], [0,10], [50,10]]" .

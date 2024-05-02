@@ -29,6 +29,10 @@ class WebServer
             "/ontologies/*",
             serveStaticFiles("./static/ontologies/", new HTTPFileServerSettings("/ontologies"))
         );
+        m_router.get(
+            "/images/*",
+            serveStaticFiles("./static/images/", new HTTPFileServerSettings("/images"))
+        );
 
 	    m_httpServerSettings.bindAddresses = ["::1", "127.0.0.1"];
 	    m_httpServerSettings.port = 3001;

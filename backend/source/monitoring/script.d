@@ -185,6 +185,6 @@ final class ScriptManager : GraphNode
     }
 
     mixin queryMixin!(
-        listScripts, getScript, createScript, removeScript,
+        listScripts, getScript,
     );
 }

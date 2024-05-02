@@ -15,6 +15,15 @@ this:arg_polygon
     a core:DashboardTemplateArgument ;
     core:key "polygon" .
 
+# Bottom left:  51.23537974419859, 4.401279225086746 ; 1340, 1015
+# Left:         51.23602973449899, 4.400688053259243 ; 730, 640
+# Top left:     51.23667232510804, 4.401292604414899
+# Top right:    51.23666720062259, 4.402275898055477
+# Right:        51.23601739831100, 4.402825581370815
+# Bottom right: 51.23537887117524, 4.402274075510844 ; 1335, 1305
+# 
+# => 3.4305 * 10^-6 coordinate per pixel (x)
+
 this:element1
     a core:DashboardElement ;
     core:dashboardElementDefinition """
@@ -23,16 +32,38 @@ this:element1
         "text": "My chart"
     },
     "chart": {
-        "animation": false
+        "animation": false,
+        "backgroundColor": null,
+        "plotBackgroundImage": "http://localhost:3001/images/10urenloop.jpg",
+        "width": 1000,
+        "height": 600
     },
     "series": [{
-        "type": "polygon",
-        "data": {{polygon}},
+        "type": "scatter",
+        "data": [[200, 200], [300, 300], [1770, 380], [1935, 800], [1640, 1320], [1085, 1370], [885, 1160], [835, 405], [1140, 110]],
         "color": "#6060F060",
         "animation": false
     }],
+    "xAxis": {
+        "min": 0,
+        "max": 2570,
+        "minPadding": 0,
+        "maxPadding": 0,
+        "lineWidth": 0,
+        "gridLineWidth": 0,
+        "tickLength": 0
+    },
+    "yAxis": {
+        "min": 0,
+        "max": 1446,
+        "minPadding": 0,
+        "maxPadding": 0,
+        "lineWidth": 0,
+        "gridLineWidth": 0,
+        "tickLength": 0
+    },
     "credits": {
-      "enabled": false
+        "enabled": false
     }
 }
 """ ;
