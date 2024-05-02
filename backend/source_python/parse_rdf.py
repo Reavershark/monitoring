@@ -46,21 +46,22 @@ def get_template_instance_info(dashboard_template_instance_uri: URIRef):
     arg_values = list(filter(lambda x: x in dashboard_template_instance_contains_uris, graph.subjects(predicate=RDF.type, object=CORE.DashboardTemplateArgumentValue)))
 
     result = dict()
-    result["name"] = dashboard_template_name
-    result["template_instance_uri"] = dashboard_template_instance_uri
-    result["template_uri"] = dashboard_template_uri
     result["args"] = dict()
     for arg_value_uri in arg_values:
         arg_uri = single_result(graph.objects(subject=arg_value_uri, predicate=CORE.setsArgument))
         key = single_result(graph.objects(subject=arg_uri, predicate=CORE.key))
         value = single_result(graph.objects(subject=arg_value_uri, predicate=CORE.value))
         result["args"][key] = value
-    result["elements"] = list()
+    result["dashboard"] = dict()
+    result["dashboard"]["name"] = dashboard_template_name
+    result["dashboard"]["uri"] = dashboard_template_instance_uri
+    result["dashboard"]["templateUri"] = dashboard_template_uri
+    result["dashboard"]["elements"] = list()
     for element_uri in filter(lambda x: x in dashboard_template_contains_uris, graph.subjects(predicate=RDF.type, object=CORE.DashboardElement)):
-        result["elements"].append({
+        result["dashboard"]["elements"].append({
             "uri": element_uri,
             "definition": single_result(graph.objects(subject=element_uri, predicate=CORE.dashboardElementDefinition)),
-            "data_source_uri": single_result(graph.objects(subject=element_uri, predicate=CORE.dataSource))
+            "dataSourceUri": single_result(graph.objects(subject=element_uri, predicate=CORE.dataSource))
         })
     result["scripts"] = list()
     for script_uri in filter(lambda x: x in dashboard_template_contains_uris, graph.subjects(predicate=RDF.type, object=CORE.Script)):

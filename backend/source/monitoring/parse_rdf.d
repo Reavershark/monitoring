@@ -7,6 +7,7 @@ import monitoring.resource_graph.mixins;
 import monitoring.script : Script;
 
 import std.algorithm : map;
+import std.array : replace;
 import std.format : f = format;
 
 import vibe.core.log;
@@ -35,15 +36,31 @@ void rdfDiscoverAll()
     GraphRoot gr = GraphRoot.getInstance;
     foreach (Json json; getAllTemplateInstanceInfo.map!parseJsonString)
     {
-        logInfo(f!"Processing Dashboard %s"(json["name"].get!string));
+        logInfo(f!"Processing Dashboard %s"(json["dashboard"]["name"].get!string));
         logInfo(f!"JSON: %s"(json));
-        Dashboard dashboard = gr.dashboardManager.createDashboard(
-            json["template_instance_uri"].get!string,
-            ""
-        );
+
+        string replaceTemplateVars(in string s)
+        {
+            string result = s.dup;
+            foreach (string key, Json jsonValue; json["args"].get!(Json[string]))
+            {
+                string value = jsonValue.get!string;
+                result = result.replace(f!"{{%s}}"(key), value);
+            }
+            return result;
+        }
+
         foreach (Json scriptJson; json["scripts"].get!(Json[]))
         {
-            Script script = gr.scriptManager.createScriptFromJson(scriptJson);
+            scriptJson["source"] = replaceTemplateVars(scriptJson["source"].get!string);
+            gr.scriptManager.createScriptFromJson(scriptJson);
         }
+
+        foreach(ref Json elJson; json["dashboard"]["elements"].get!(Json[]))
+        {
+            elJson["definition"] = replaceTemplateVars(elJson["definition"].get!string);
+        }
+
+        gr.dashboardManager.createDashboardFromJson(json["dashboard"]);
     }
 }

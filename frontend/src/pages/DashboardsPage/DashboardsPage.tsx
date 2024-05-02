@@ -11,7 +11,7 @@ export default function DashboardsPage() {
     return (
         <>
             <DashboardTabs selected={selected} setSelected={setSelected} />
-            <Dashboard id={selected} />
+            <Dashboard uri={selected} />
         </>
     );
 }

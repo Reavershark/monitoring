@@ -12,57 +12,54 @@ const webSocketRequesters = {
 };
 
 interface Props {
-    id: string;
-}
-
-interface JSONDashboard {
-    id: string;
-    data_sources: Array<DataSource>;
-    elements: Array<DashboardElement>;
-}
-
-interface DataSource {
     uri: string;
 }
 
-interface DashboardElement {
-    definition: Highcharts.Options;
+interface JsonDashboard {
+    uri: string;
+    elements: Array<JsonDashboardElement>;
 }
 
-export default function Dashboard({ id }: Props) {
-    const [dashboard, setDashboard] = useState<JSONDashboard | null>();
+interface JsonDashboardElement {
+    uri: string;
+    definition: string;
+    dataSources: string;
+}
+
+export default function Dashboard({ uri }: Props) {
+    const [dashboard, setDashboard] = useState<JsonDashboard | null>();
     const { lastJsonMessage, sendJsonMessage } = useWebSocket(webSocketUrl, {
         shouldReconnect: () => true,
         share: true,
         filter: (message) => Object.values(webSocketRequesters).includes(JSON.parse(message.data).requester),
     });
 
-    console.log(`Dashboard render: id = "${id}", dashboard = ${dashboard}`);
+    console.log(`Dashboard render: uri = "${uri}", dashboard = ${dashboard}`);
 
     useEffect(() => {
-        if (id.length > 0) {
+        if (uri.length > 0) {
             sendJsonMessage({
                 requester: webSocketRequesters.general,
                 type: "query",
                 path: [
                     { name: "dashboardManager" },
-                    { name: "getDashboard", args: [id] },
+                    { name: "getDashboard", args: [uri] },
                 ]
             });
         }
-    }, [id]);
+    }, [uri]);
 
     useEffect(() => {
         const msg: any = lastJsonMessage
         if (msg && msg.result)
         {
             console.log(`Received dashboard desc ${JSON.stringify(msg)}`);
-            setDashboard(null);
+            setDashboard(msg.result);
         }
-    }, [lastJsonMessage]);
+    }, [lastJsonMessage, setDashboard]);
 
     if (!dashboard) {
-        return <p>Loading {id}...</p>
+        return <p>Loading {uri}...</p>
     }
     else {
         let i = 0;
@@ -70,7 +67,7 @@ export default function Dashboard({ id }: Props) {
             <div>
                 {dashboard.elements.map(el =>
                     <HSVisualization
-                        definition={el.definition}
+                        definition={JSON.parse(el.definition)}
                         key={i++}
                     />
                 )}

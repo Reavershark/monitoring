@@ -15,7 +15,7 @@ interface Props {
 }
 
 export default function DashboardTabs({ selected, setSelected }: Props) {
-    const [dashboardIds, setDashboardIds] = useState<Array<string>>([]);
+    const [dashboardUris, setDashboardUris] = useState<Array<string>>([]);
     const { lastJsonMessage, sendJsonMessage } = useWebSocket(webSocketUrl, {
         onOpen() {
             sendJsonMessage({
@@ -36,7 +36,7 @@ export default function DashboardTabs({ selected, setSelected }: Props) {
         const msg: any = lastJsonMessage
         if (msg && msg.result) {
             const ids: Array<string> = msg.result;
-            setDashboardIds(ids);
+            setDashboardUris(ids);
 
             if (selected === "" && ids.length > 0) {
                 setSelected(ids[0])
@@ -54,17 +54,17 @@ export default function DashboardTabs({ selected, setSelected }: Props) {
             }, 1000);
             return () => clearInterval(interval);
         }
-    }, [lastJsonMessage, sendJsonMessage, setDashboardIds, selected, setSelected])
+    }, [lastJsonMessage, sendJsonMessage, setDashboardUris, selected, setSelected])
 
     return (
         <div className="tabList">
-            {dashboardIds.map(id =>
+            {dashboardUris.map(uri =>
                 <div
-                    className={"tab" + (selected === id ? " tab-selected" : "")}
-                    onClick={() => setSelected(id)}
-                    key={id}
+                    className={"tab" + (selected === uri ? " tab-selected" : "")}
+                    onClick={() => setSelected(uri)}
+                    key={uri}
                 >
-                    {id}
+                    {uri}
                 </div>
             )}
         </div>

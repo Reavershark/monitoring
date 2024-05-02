@@ -1,8 +1,12 @@
 module monitoring.dashboard;
 
 import monitoring.resource_graph.graph : GraphNode;
+import monitoring.resource_graph.graph_root : GraphRoot;
 import monitoring.resource_graph.mixins : queryMixin;
+import monitoring.script : Script;
 
+import std.algorithm : map;
+import std.array : array;
 import std.exception : enforce;
 
 import vibe.data.json : Json;
@@ -12,31 +16,26 @@ import vibe.data.json : Json;
 final class Dashboard : GraphNode
 {
     private string m_uri;
-    private string m_definition;
+    private DashboardElement[] m_elements;
 
-    this(string uri, string definition)
+    this(string uri, DashboardElement[] elements = [])
     {
         m_uri = uri;
-        m_definition = definition;
+        m_elements = elements;
     }
 
     string uri() const pure => m_uri;
-    string definition() const pure => m_definition;
-
-    void setDefinition(string definition) pure
-    {
-        m_definition = definition;
-    }
+    DashboardElement[] elements() pure => m_elements;
 
     mixin queryMixin!(
-        uri, definition, setDefinition,
+        uri, elements,
     );
 
     Json toJson() const
     {
         Json json = Json.emptyObject;
         json["uri"] = uri;
-        json["definition"] = definition;
+        json["elements"] = m_elements.map!(el => el.toJson).array;
         return json;
     }
 
@@ -44,10 +43,50 @@ final class Dashboard : GraphNode
     {
         auto instance = new typeof(this)(
             json["uri"].get!string,
-            json["definition"].get!string,
+            json["elements"].get!(Json[]).map!(j => DashboardElement.fromJson(j)).array,
         );
         return instance;
     }
+}
+
+final class DashboardElement : GraphNode
+{
+    private string m_uri;
+    private string m_definition;
+    private Script m_dataSource;
+
+    this(string uri, string definition, Script dataSource)
+    {
+        m_uri = uri;
+        m_definition = definition;
+        m_dataSource = dataSource;
+    }
+
+    string uri() const pure => m_uri;
+    string definition() const pure => m_definition;
+    string dataSourceUri() const pure => m_dataSource.uri;
+    Script dataSource() pure => m_dataSource;
+
+    Json toJson() const
+    {
+        Json json = Json.emptyObject;
+        json["uri"] = uri;
+        json["definition"] = definition;
+        json["dataSourceUri"] = dataSourceUri;
+        return json;
+    }
+
+    static DashboardElement fromJson(Json json)
+    {
+        auto instance = new typeof(this)(
+            json["uri"].get!string,
+            json["definition"].get!string,
+            GraphRoot.getInstance.scriptManager.getScript(json["dataSourceUri"].get!string),
+        );
+        return instance;
+    }
+
+    mixin queryMixin!(uri, definition, dataSourceUri, dataSource);
 }
 
 final class DashboardManager : GraphNode
@@ -63,15 +102,7 @@ final class DashboardManager : GraphNode
         return m_dashboards.keys;
     }
 
-    Dashboard createDashboard(string uri, string definition)
-    {
-        enforce(uri !in m_dashboards);
-        Dashboard dashboard = new Dashboard(uri, definition);
-        m_dashboards[uri] = dashboard;
-        return dashboard;
-    }
-
-    Dashboard createScriptFromJson(Json json)
+    Dashboard createDashboardFromJson(Json json)
     {
         enforce(json["uri"].get!string !in m_dashboards);
         Dashboard dashboard = Dashboard.fromJson(json);
@@ -92,6 +123,6 @@ final class DashboardManager : GraphNode
     }
 
     mixin queryMixin!(
-        listDashboards, getDashboard, createDashboard, removeDashboard,
+        listDashboards, getDashboard,
     );
 }
