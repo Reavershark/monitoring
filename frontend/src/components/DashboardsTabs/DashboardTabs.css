@@ -1,0 +1,30 @@
+/* Mostly from react-tabs.css */
+
+.tabList {
+    border-bottom: 1px solid #aaa;
+    margin: 0 0 10px;
+    padding: 0;
+}
+
+.tab {
+    display: inline-block;
+    border: 1px solid transparent;
+    border-bottom: none;
+    bottom: -1px;
+    position: relative;
+    list-style: none;
+    padding: 6px 12px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.tab-selected {
+  background: #fff;
+  border-color: #aaa;
+  color: black;
+  border-radius: 5px 5px 0 0;
+}
+
+.tab:focus {
+    outline: none;
+}

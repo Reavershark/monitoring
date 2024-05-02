@@ -1,0 +1,8 @@
+FROM node:20-slim
+RUN corepack enable
+WORKDIR /app
+COPY package.json pnpm-lock.yaml .
+RUN pnpm install --no-optional --frozen-lockfile
+VOLUME /app/src
+VOLUME /app/public
+CMD pnpm start

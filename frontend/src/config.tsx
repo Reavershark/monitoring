@@ -1,0 +1,1 @@
+export const webSocketUrl = "ws://localhost:3001/ws";

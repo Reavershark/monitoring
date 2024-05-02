@@ -1,0 +1,6 @@
+p {
+    padding: 2px;
+    width: fit-content;
+    border: 8px;
+    border-style: double;
+}

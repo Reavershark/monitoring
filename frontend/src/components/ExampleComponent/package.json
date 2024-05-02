@@ -1,0 +1,6 @@
+{
+    "main": "ExampleComponent.tsx",
+    "name": "ExampleComponent",
+    "private": true,
+    "version": "0.0.0"
+}
