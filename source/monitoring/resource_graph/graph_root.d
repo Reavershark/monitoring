@@ -1,5 +1,6 @@
 module monitoring.resource_graph.graph_root;
 
+import monitoring.dashboard : DashboardManager;
 import monitoring.resource_graph.graph : GraphNode;
 import monitoring.resource_graph.mixins : queryMixin;
 import monitoring.script : ScriptManager;
@@ -18,27 +19,25 @@ final class GraphRoot : GraphNode
     private static typeof(this) sm_instance;
 
     private ScriptManager m_scriptManager;
+    private DashboardManager m_dashboardManager;
 
     private this()
     {
         m_scriptManager = new ScriptManager;
+        m_dashboardManager = new DashboardManager;
     }
 
-    static synchronized typeof(this) getInstance()
+    static synchronized GraphRoot getInstance()
     {
         if (sm_instance is null)
             sm_instance = new typeof(this);
         return sm_instance;
     }
 
-    string test(in string s) const
-    {
-        return f!"Echo %s!"(s);
-    }
-
     ScriptManager scriptManager() pure => m_scriptManager;
+    DashboardManager dashboardManager() pure => m_dashboardManager;
 
     mixin queryMixin!(
-        test, scriptManager,
+        scriptManager, dashboardManager,
     );
 }

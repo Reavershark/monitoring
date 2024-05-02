@@ -1,0 +1,44 @@
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix core: <http://localhost:3001/ontologies/core/> .
+
+@prefix this: <http://localhost:3001/ontologies/templates/dashboard1/> .
+
+this:template
+    a core:DashboardTemplate ;
+    core:dashboardTemplateName "Dashboard 1" ;
+    core:dashboardTemplateContains this:arg_polygon ;
+    core:dashboardTemplateContains this:element1 ;
+    core:dashboardTemplateContains this:script1 .
+
+this:arg_polygon
+    a core:DashboardTemplateArgument ;
+    core:key "polygon" .
+
+this:element1
+    a core:DashboardElement ;
+    core:dashboardElementDefinition """
+{
+    "title": {
+        "text": "My chart"
+    },
+    "chart": {
+        "animation": false
+    },
+    "series": [{
+        "type": "polygon",
+        "data": {{polygon}},
+        "color": "#6060F060",
+        "animation": false
+    }],
+    "credits": {
+      "enabled": false
+    }
+}
+""" ;
+    core:dataSource this:script1 .
+
+this:script1
+    a core:Script ;
+    core:scriptType "shell" ;
+    core:scriptSourceCode "echo \"Hello World\"" .

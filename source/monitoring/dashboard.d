@@ -3,36 +3,54 @@ module monitoring.dashboard;
 import monitoring.resource_graph.graph : GraphNode;
 import monitoring.resource_graph.mixins : queryMixin;
 
-import std.uuid : randomUUID;
+import std.exception : enforce;
+
+import vibe.data.json : Json;
 
 @safe:
 
 final class Dashboard : GraphNode
 {
-    private string m_uuid;
+    private string m_uri;
     private string m_definition;
 
-    this(string definition)
+    this(string uri, string definition)
     {
-        m_uuid = randomUUID.toString;
+        m_uri = uri;
         m_definition = definition;
     }
 
-    string uuid() const pure => m_uuid;
+    string uri() const pure => m_uri;
     string definition() const pure => m_definition;
 
-    bool setDefinition(string definition) pure
+    void setDefinition(string definition) pure
     {
         m_definition = definition;
-        return true;
     }
 
     mixin queryMixin!(
-        uuid, definition, setDefinition,
+        uri, definition, setDefinition,
     );
+
+    Json toJson() const
+    {
+        Json json = Json.emptyObject;
+        json["uri"] = uri;
+        json["definition"] = definition;
+        return json;
+    }
+
+    static Dashboard fromJson(Json json)
+    {
+        auto instance = new typeof(this)(
+            json["uri"].get!string,
+            json["definition"].get!string,
+        );
+        return instance;
+    }
 }
 
-final class DashboardManager
+final class DashboardManager : GraphNode
 {
     private Dashboard[string] m_dashboards;
 
@@ -45,24 +63,32 @@ final class DashboardManager
         return m_dashboards.keys;
     }
 
-    string createDashboard(string definition)
+    Dashboard createDashboard(string uri, string definition)
     {
-        Dashboard dashboard = new Dashboard(definition);
-        m_dashboards[dashboard.uuid] = dashboard;
-        return dashboard.uuid;
+        enforce(uri !in m_dashboards);
+        Dashboard dashboard = new Dashboard(uri, definition);
+        m_dashboards[uri] = dashboard;
+        return dashboard;
     }
 
-    Dashboard getDashboard(string uuid)
+    Dashboard createScriptFromJson(Json json)
     {
-        enforce(uuid in m_dashboards);
-        return m_dashboards[uuid];
+        enforce(json["uri"].get!string !in m_dashboards);
+        Dashboard dashboard = Dashboard.fromJson(json);
+        m_dashboards[dashboard.uri] = dashboard;
+        return dashboard;
     }
 
-    bool removeDashboard(string uuid)
+    Dashboard getDashboard(string uri)
     {
-        enforce(uuid in m_dashboards);
-        m_dashboards.remove(uuid);
-        return true;
+        enforce(uri in m_dashboards);
+        return m_dashboards[uri];
+    }
+
+    void removeDashboard(string uri)
+    {
+        enforce(uri in m_dashboards);
+        m_dashboards.remove(uri);
     }
 
     mixin queryMixin!(

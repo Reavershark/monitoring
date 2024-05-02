@@ -1,0 +1,74 @@
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+@prefix core: <http://localhost:3001/ontologies/core/> .
+
+# Template
+core:DashboardTemplate a rdfs:Class .
+
+    core:dashboardTemplateName
+        a rdfs:Property ;
+        rdfs:domain core:DashboardTemplate ;
+        rdfs:range xsd:string .
+
+    core:dashboardTemplateContains
+        a rdfs:Property ;
+        rdfs:domain core:DashboardTemplate ;
+        rdfs:range core:DashboardTemplateArgument ;
+        rdfs:range core:DashboardElement ;
+        rdfs:range core:Script .
+
+core:DashboardTemplateArgument a rdfs:Class .
+
+    core:key
+        a rdfs:Property ;
+        rdfs:domain core:DashboardTemplateArgument ;
+        rdfs:range xsd:string .
+
+core:DashboardElement a rdfs:Class .
+
+    core:dashboardElementDefinition
+        a rdfs:Property ;
+        rdfs:domain core:DashboardElement ;
+        rdfs:range core:string .
+
+    core:dataSource
+        a rdfs:Property ;
+        rdfs:domain core:DashboardElement ;
+        rdfs:range core:Script .
+
+core:Script a rdfs:Class .
+    core:scriptType
+        a rdfs:Property ;
+        rdfs:domain core:Script ;
+        rdfs:range xsd:string .
+    
+    core:scriptSourceCode
+        a rdfs:Property ;
+        rdfs:domain core:Script ;
+        rdfs:range xsd:string .
+
+# Template instance
+core:DashboardTemplateInstance a rdfs:Class .
+
+    core:instanceOf
+        a rdfs:Property ;
+        rdfs:domain core:DashboardTemplate ;
+        rdfs:range core:DashboardTemplateInstance .
+
+    core:dashboardTemplateInstanceContains
+        a rdfs:Property ;
+        rdfs:domain core:DashboardTemplateInstance ;
+        rdfs:range core:DashboardTemplateArgumentValue .
+
+core:DashboardTemplateArgumentValue a rdfs:Class .
+
+    core:setsArgument
+        a rdfs:Property ;
+        rdfs:domain core:DashboardTemplateArgumentValue ;
+        rdfs:range core:DashboardTemplateArgument .
+
+    core:value
+        a rdfs:Property ;
+        rdfs:domain core:TemplateArgumentValue ;
+        rdfs:range xsd:string .

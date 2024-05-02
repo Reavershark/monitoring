@@ -3,18 +3,16 @@ module monitoring.script;
 import monitoring.resource_graph.graph : GraphNode;
 import monitoring.resource_graph.mixins;
 import monitoring.util.temp_file : TempFile;
+import monitoring.util.string : b64EncodeString;
 
 import std.array : join;
 import std.conv : octal, to;
-import std.base64 : Base64;
 import std.exception : enforce;
 import std.file : getAttributes, setAttributes;
 import std.process : pipeProcess, pipeShell, ProcessPipes, wait;
 import std.string : capitalize;
-import std.uuid : randomUUID;
 
-import vibe.data.json : Json;
-import vibe.data.bson;
+import vibe.data.json : Json, parseJsonString;
 
 @safe:
 
@@ -27,19 +25,19 @@ enum ScriptType
 
 final class Script : GraphNode
 {
-    private string m_uuid;
+    private string m_uri;
     private ScriptType m_type;
     private string m_source;
     private TempFile* m_tempFile;
 
-    this(in ScriptType type, string source)
+    this(string uri, in ScriptType type, string source)
     {
-        m_uuid = randomUUID.toString;
+        m_uri = uri;
         m_type = type;
         m_source = source;
     }
 
-    string uuid() const pure => m_uuid;
+    string uri() const pure => m_uri;
     ScriptType type() const pure => m_type;
     string source() const pure => m_source;
 
@@ -61,7 +59,7 @@ final class Script : GraphNode
     {
         if (m_tempFile is null)
         {
-            m_tempFile = new TempFile(m_uuid ~ ".sh");
+            m_tempFile = new TempFile(b64EncodeString(m_uri) ~ ".sh");
             m_tempFile.file.write(m_source);
             m_tempFile.file.flush;
             m_tempFile.file.close;
@@ -84,7 +82,7 @@ final class Script : GraphNode
         if (m_tempFile is null)
         {
             m_tempFile = new TempFile(
-                "rdmd_" ~ cast(string) Base64.encode(cast(ubyte[]) m_uuid.dup) ~ ".d");
+                "rdmd_" ~ b64EncodeString(m_uri) ~ ".d");
             m_tempFile.file.write(m_source);
             m_tempFile.file.flush;
             m_tempFile.file.close;
@@ -105,7 +103,7 @@ final class Script : GraphNode
     {
         if (m_tempFile is null)
         {
-            m_tempFile = new TempFile(m_uuid ~ ".py");
+            m_tempFile = new TempFile(b64EncodeString(m_uri) ~ ".py");
             m_tempFile.file.write(m_source);
             m_tempFile.file.flush;
             m_tempFile.file.close;
@@ -126,7 +124,7 @@ final class Script : GraphNode
     Json toJson() const
     {
         Json json = Json.emptyObject;
-        json["uuid"] = uuid;
+        json["uri"] = uri;
         json["type"] = type;
         json["source"] = source;
         return json;
@@ -135,12 +133,12 @@ final class Script : GraphNode
     static Script fromJson(Json json)
     {
         auto instance = new typeof(this)(
+            json["uri"].get!string,
             json["type"].get!string
                 .capitalize
                 .to!ScriptType,
-            json["source"].get!string
+            json["source"].get!string,
         );
-        instance.m_uuid = json["uuid"].get!string;
         return instance;
     }
 }
@@ -158,24 +156,32 @@ final class ScriptManager : GraphNode
         return m_scripts.keys;
     }
 
-    string createScript(string type, string source)
+    Script createScript(string uri, string type, string source)
     {
-        Script script = new Script(type.capitalize.to!ScriptType, source);
-        m_scripts[script.uuid] = script;
-        return script.uuid;
+        enforce(uri !in m_scripts);
+        Script script = new Script(uri, type.capitalize.to!ScriptType, source);
+        m_scripts[uri] = script;
+        return script;
     }
 
-    Script getScript(string uuid)
+    Script createScriptFromJson(Json json)
     {
-        enforce(uuid in m_scripts);
-        return m_scripts[uuid];
+        enforce(json["uri"].get!string !in m_scripts);
+        Script script = Script.fromJson(json);
+        m_scripts[script.uri] = script;
+        return script;
     }
 
-    bool removeScript(string uuid)
+    Script getScript(string uri)
     {
-        enforce(uuid in m_scripts);
-        m_scripts.remove(uuid);
-        return true;
+        enforce(uri in m_scripts);
+        return m_scripts[uri];
+    }
+
+    void removeScript(string uri)
+    {
+        enforce(uri in m_scripts);
+        m_scripts.remove(uri);
     }
 
     mixin queryMixin!(

@@ -4,7 +4,7 @@ import monitoring.webserver.websocket;
 
 import vibe.core.core;
 import vibe.core.log;
-import vibe.http.fileserver : serveStaticFiles;
+import vibe.http.fileserver : serveStaticFiles, HTTPFileServerSettings;
 import vibe.http.router : URLRouter;
 import vibe.http.server;
 import vibe.http.websockets : WebSocket, handleWebSockets;
@@ -21,7 +21,14 @@ class WebServer
 	    m_router = new URLRouter;
         m_httpServerSettings = new HTTPServerSettings;
 
-	    m_router.get("/ws", handleWebSockets((scope WebSocket s) => new WebSocketHandler(s).run()));
+	    m_router.get(
+            "/ws",
+            handleWebSockets((scope WebSocket s) => new WebSocketHandler(s).run())
+        );
+        m_router.get(
+            "/ontologies/*",
+            serveStaticFiles("./static/ontologies/", new HTTPFileServerSettings("/ontologies"))
+        );
 
 	    m_httpServerSettings.bindAddresses = ["::1", "127.0.0.1"];
 	    m_httpServerSettings.port = 3001;

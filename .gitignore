@@ -14,3 +14,5 @@ monitoring-test-*
 *.o
 *.obj
 *.lst
+
+.venv

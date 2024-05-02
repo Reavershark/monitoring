@@ -40,7 +40,7 @@ template queryMixin(Methods...) if (Methods.length > 0)
                 enum returnsJsonSerializable = __traits(compiles, {
                         ReturnType!Method a;
                         Json b = a.serializeToJson;
-                    });
+                    }) || is(ReturnType!Method == void);
                 static assert(returnsGraphNode || returnsJsonSerializable);
             }
         }
@@ -81,23 +81,36 @@ template queryMixin(Methods...) if (Methods.length > 0)
                         .map!(i => f!"arg_%d"(i))
                         .join(", ");
 
-                    enum returnGraphNodeCode = f!"return typeof(return)(cast(GraphNode) %s(%s));"(
-                            MethodName, argsToMixin
-                        );
-                    enum returnJsonCode = f!"return typeof(return)(serializeToJson(%s(%s)));"(
-                            MethodName, argsToMixin
-                        );
+                    enum callCode = f!"%s(%s)"(MethodName, argsToMixin);
+
+                    // dfmt off
+                    enum returnGraphNodeCode = f!"return typeof(return)(cast(GraphNode) %s);"(callCode);
+                    enum returnVoidCode = f!"%s; return typeof(return)(serializeToJson(null));"(callCode);
+                    enum returnJsonCode = f!"return typeof(return)(serializeToJson(%s));"(callCode);
+                    // dfmt on
 
                     // Finally, generate the method call
                     static if (implementsGraphNode!(ReturnType!Method))
                     {
                         if (!lastSegment)
+                        {
                             mixin(returnGraphNodeCode);
+                        }
+                        else
+                        {
+                            static if (is(ReturnType!Method == void))
+                                mixin(returnVoidCode);
+                            else
+                                mixin(returnJsonCode);
+                        }
+                    }
+                    else
+                    {
+                        static if (is(ReturnType!Method == void))
+                            mixin(returnVoidCode);
                         else
                             mixin(returnJsonCode);
                     }
-                    else
-                        mixin(returnJsonCode);
                 }
             }
 

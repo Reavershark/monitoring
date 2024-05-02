@@ -28,16 +28,32 @@ class WebSocketHandler
     {
         while (m_ws.connected)
         {
+            Json msg = Json.emptyObject;
+            Json response = Json.emptyObject;
+
             try
-            {
-                Json msg = readMessage;
-                try
-                    handleMessage(msg);
-                catch (Exception e)
-                    logWarn(f!"Exception during handleMessage: %s"(e.msg));
-            }
+                msg = readMessage;
             catch (Exception e)
+            {
                 logWarn(f!"Exception during readMessage: %s"(e.msg));
+                response["error"] = Json(e.msg);
+            }
+
+            if (msg != Json.emptyObject)
+            {
+                try
+                    response["result"] = handleMessage(msg);
+                catch (Exception e)
+                {
+                    logWarn(f!"Exception during handleMessage: %s"(e.msg));
+                    response["error"] = Json(e.msg);
+                }
+
+                if ("requester" in msg)
+                    response["requester"] = msg["requester"];
+            }
+
+            m_ws.send(response.toString);
         }
     }
 
@@ -51,13 +67,14 @@ class WebSocketHandler
             throw new WebSocketException(f!"Message is not in json format: %s"(text));
     }
 
-    private void handleMessage(Json msg)
+    private Json handleMessage(Json msg)
     {
         Request req = parseRequest(msg);
         writefln!"Parsed msg: %s"(req);
 
         Json result = executeRequest(req, GraphRoot.getInstance);
         writefln!"Result: %s"(result);
-        m_ws.send(result.toString);
+
+        return result;
     }
 }
