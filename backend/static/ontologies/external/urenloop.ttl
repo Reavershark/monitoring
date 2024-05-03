@@ -1,0 +1,16 @@
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix sosa: <http://www.w3.org/ns/sosa/> .
+
+@prefix this: <http://localhost:3001/ontologies/external/urenloop> .
+
+this:Station a rdfs:Class .
+
+    this:stationComponent
+        a rdfs:Property ;
+        rdfs:domain this:Station ;
+        rdfs:range this:StationPi ;
+        rdfs:range this:StationSwitch .
+
+this:StationPi a rdfs:Class .
+this:StationSwitch a rdfs:Class .

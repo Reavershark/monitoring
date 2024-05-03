@@ -79,9 +79,12 @@ def get_template_instance_info(dashboard_template_instance_uri: URIRef):
 
 
 def get_all_template_instance_info():
-    init_graph()
-    return [
-        get_template_instance_info(instance)
-        for instance
-        in graph.subjects(predicate=RDF.type, object=CORE.DashboardTemplateInstance)
-    ]
+    try:
+        init_graph()
+        return [
+            get_template_instance_info(instance)
+            for instance
+            in graph.subjects(predicate=RDF.type, object=CORE.DashboardTemplateInstance)
+        ]
+    except Exception as e:
+        print("get_all_template_instance_info failed:", e)

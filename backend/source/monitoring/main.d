@@ -15,10 +15,10 @@ import pyd.pyd : py_init;
 /// Catches segfaults and prints debug info, only works on x86 and x86_64.
 void setupSegfaultHandler() @trusted
 {
-  import etc.linux.memoryerror;
+    import etc.linux.memoryerror;
 
-  static if (is(typeof(registerMemoryErrorHandler)))
-    registerMemoryErrorHandler();
+    static if (is(typeof(registerMemoryErrorHandler)))
+        registerMemoryErrorHandler();
 }
 
 void main() @trusted

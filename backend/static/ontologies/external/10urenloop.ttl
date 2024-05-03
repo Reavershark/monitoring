@@ -1,0 +1,96 @@
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix sosa: <http://www.w3.org/ns/sosa/> .
+
+@prefix core: <http://localhost:3001/ontologies/core/> .
+@prefix ul: <http://localhost:3001/ontologies/external/urenloop/> .
+
+@prefix this: <http://localhost:3001/ontologies/external/10urenloop/> .
+
+this:satteliteImage
+    a core:Image ;
+    core:url "http://localhost:3001/images/10urenloop.jpg" .
+
+this:s1
+    a ul:Station ;
+    ul:stationComponent this:s1Switch ;
+    ul:stationComponent this:s1Pi ;
+    core:hasPosition this:s1Position .
+this:s1Switch a ul:StationSwitch .
+this:s1Pi a ul:StationPi .
+this:s1Position a core:Position ;
+    core:x 1770 ;
+    core:y 380 ;
+    core:onImage this:satteliteImage .
+
+this:s2
+    a ul:Station ;
+    ul:stationComponent this:s2Switch ;
+    ul:stationComponent this:s2Pi ;
+    core:hasPosition this:s2Position .
+this:s2Switch a ul:StationSwitch .
+this:s2Pi a ul:StationPi .
+this:s2Position a core:Position ;
+    core:x 1935 ;
+    core:y 800 ;
+    core:onImage this:satteliteImage .
+
+this:s3
+    a ul:Station ;
+    ul:stationComponent this:s3Switch ;
+    ul:stationComponent this:s3Pi ;
+    core:hasPosition this:s3Position .
+this:s3Switch a ul:StationSwitch .
+this:s3Pi a ul:StationPi .
+this:s3Position a core:Position ;
+    core:x 1640 ;
+    core:y 1320 ;
+    core:onImage this:satteliteImage .
+
+this:s4
+    a ul:Station ;
+    ul:stationComponent this:s4Switch ;
+    ul:stationComponent this:s4Pi ;
+    core:hasPosition this:s4Position .
+this:s4Switch a ul:StationSwitch .
+this:s4Pi a ul:StationPi .
+this:s4Position a core:Position ;
+    core:x 1085 ;
+    core:y 1370 ;
+    core:onImage this:satteliteImage .
+
+this:s5
+    a ul:Station ;
+    ul:stationComponent this:s5Switch ;
+    ul:stationComponent this:s5Pi ;
+    core:hasPosition this:s5Position .
+this:s5Switch a ul:StationSwitch .
+this:s5Pi a ul:StationPi .
+this:s5Position a core:Position ;
+    core:x 800 ;
+    core:y 1020 ;
+    core:onImage this:satteliteImage .
+
+this:s6
+    a ul:Station ;
+    ul:stationComponent this:s6Switch ;
+    ul:stationComponent this:s6Pi ;
+    core:hasPosition this:s6Position .
+this:s6Switch a ul:StationSwitch .
+this:s6Pi a ul:StationPi .
+this:s6Position a core:Position ;
+    core:x 835 ;
+    core:y 405 ;
+    core:onImage this:satteliteImage .
+
+this:s7
+    a ul:Station ;
+    ul:stationComponent this:s7Switch ;
+    ul:stationComponent this:s7Pi ;
+    core:hasPosition this:s7Position .
+this:s7Switch a ul:StationSwitch .
+this:s7Pi a ul:StationPi .
+this:s7Position a core:Position ;
+    core:x 1200 ;
+    core:y 110 ;
+    core:onImage this:satteliteImage .
