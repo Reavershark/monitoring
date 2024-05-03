@@ -38,26 +38,32 @@ this:element1
         "width": 1000,
         "height": 600
     },
+    "plotOptions": {
+        "series": {
+            "animation": false,
+            "dataLabels": [{
+                "enabled": true,
+                "format": "{point.label}"
+            }],
+            "tooltip": {
+                "headerFormat": "",
+                "pointFormat": "{point.label}"
+            }
+        }
+    },
     "series": [{
         "type": "scatter",
         "name": "Stations",
+        "color": "#FF4040FF",
         "data": [
             {"x": 1770, "y": 380,  "label": "R1"},
             {"x": 1935, "y": 800,  "label": "R2"},
             {"x": 1640, "y": 1320, "label": "R3"},
             {"x": 1085, "y": 1370, "label": "R4"},
-            {"x": 885,  "y": 1160, "label": "R5"},
+            {"x": 800,  "y": 1020, "label": "R5"},
             {"x": 835,  "y": 405,  "label": "R6"},
-            {"x": 1140, "y": 110,  "label": "R7"}
-        ],
-        "dataLabels": [{
-            "enabled": true
-        }],
-        "color": "#FF4040FF",
-        "animation": false,
-        "tooltip": {
-            "pointFormat": "<p>{point.label}<p/>"
-        }
+            {"x": 1200, "y": 110,  "label": "R7"}
+        ]
     }],
     "xAxis": {
         "min": 0,
