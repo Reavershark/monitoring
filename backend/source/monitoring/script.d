@@ -156,6 +156,11 @@ final class ScriptManager : GraphNode
         return m_scripts.keys;
     }
 
+    void removeAllScripts()
+    {
+        m_scripts = null;
+    }
+
     Script createScript(string uri, string type, string source)
     {
         enforce(uri !in m_scripts);

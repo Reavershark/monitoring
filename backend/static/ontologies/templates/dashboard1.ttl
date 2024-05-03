@@ -40,15 +40,32 @@ this:element1
     },
     "series": [{
         "type": "scatter",
-        "data": [[200, 200], [300, 300], [1770, 380], [1935, 800], [1640, 1320], [1085, 1370], [885, 1160], [835, 405], [1140, 110]],
-        "color": "#6060F060",
-        "animation": false
+        "name": "Stations",
+        "data": [
+            {"x": 1770, "y": 380,  "label": "R1"},
+            {"x": 1935, "y": 800,  "label": "R2"},
+            {"x": 1640, "y": 1320, "label": "R3"},
+            {"x": 1085, "y": 1370, "label": "R4"},
+            {"x": 885,  "y": 1160, "label": "R5"},
+            {"x": 835,  "y": 405,  "label": "R6"},
+            {"x": 1140, "y": 110,  "label": "R7"}
+        ],
+        "dataLabels": [{
+            "enabled": true
+        }],
+        "color": "#FF4040FF",
+        "animation": false,
+        "tooltip": {
+            "pointFormat": "<p>{point.label}<p/>"
+        }
     }],
     "xAxis": {
         "min": 0,
         "max": 2570,
         "minPadding": 0,
         "maxPadding": 0,
+        "startOnTick": false,
+        "endOnTick": false,
         "lineWidth": 0,
         "gridLineWidth": 0,
         "tickLength": 0
@@ -58,6 +75,8 @@ this:element1
         "max": 1446,
         "minPadding": 0,
         "maxPadding": 0,
+        "startOnTick": false,
+        "endOnTick": false,
         "lineWidth": 0,
         "gridLineWidth": 0,
         "tickLength": 0

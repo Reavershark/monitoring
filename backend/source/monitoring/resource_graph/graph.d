@@ -123,13 +123,13 @@ in (root !is null)
 
             if (!isLastSegment)
             {
-                logInfo(f!"Current node: %s"(curr));
+                logDebug(f!"Current node: %s"(curr));
                 curr = curr.query(segment, isLastSegment)
                     .match!(
                         (GraphNode n) => n,
                         _ => assert(false),
                 );
-                logInfo(f!"Current node: %s"(curr));
+                logDebug(f!"Current node: %s"(curr));
                 enforce(curr !is null);
             }
             else

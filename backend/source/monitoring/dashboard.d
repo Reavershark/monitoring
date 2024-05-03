@@ -102,6 +102,11 @@ final class DashboardManager : GraphNode
         return m_dashboards.keys;
     }
 
+    void removeAllDashboards()
+    {
+        m_dashboards = null;
+    }
+
     Dashboard createDashboardFromJson(Json json)
     {
         enforce(json["uri"].get!string !in m_dashboards);

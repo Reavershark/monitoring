@@ -1,13 +1,11 @@
 module monitoring.webserver.main;
 
-import monitoring.webserver.websocket;
+import monitoring.webserver.websocket : WebSocketHandler;
 
-import vibe.core.core;
-import vibe.core.log;
-import vibe.http.fileserver : serveStaticFiles, HTTPFileServerSettings;
+import vibe.http.fileserver : HTTPFileServerSettings, serveStaticFiles;
 import vibe.http.router : URLRouter;
-import vibe.http.server;
-import vibe.http.websockets : WebSocket, handleWebSockets;
+import vibe.http.server : HTTPListener, HTTPServerSettings, listenHTTP;
+import vibe.http.websockets : handleWebSockets, WebSocket;
 
 @safe:
 
@@ -15,6 +13,7 @@ class WebServer
 {
     private URLRouter m_router;
     private HTTPServerSettings m_httpServerSettings;
+    private HTTPListener m_httpListener;
 
     this()
     {
@@ -38,9 +37,9 @@ class WebServer
 	    m_httpServerSettings.port = 3001;
     }
 
-    void run()
+    void start()
+    in (m_httpListener == HTTPListener.init)
     {
-	    auto listener = listenHTTP(m_httpServerSettings, m_router);
-	    runEventLoop;
+        m_httpListener = listenHTTP(m_httpServerSettings, m_router);
     }
 }

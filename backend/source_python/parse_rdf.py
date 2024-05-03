@@ -10,8 +10,12 @@ base_uri = "http://localhost:3001/ontologies"
 CORE = Namespace(f"{base_uri}/core/")
 
 graph = Graph()
-for file in Path(os.getcwd(), "static/ontologies").rglob("*.ttl"):
-    graph.parse(file)
+
+def init_graph():
+    global graph
+    graph = Graph()
+    for file in Path(os.getcwd(), "static/ontologies").rglob("*.ttl"):
+        graph.parse(file)
 
 def single_result(it):
     l = list(it)
@@ -75,6 +79,7 @@ def get_template_instance_info(dashboard_template_instance_uri: URIRef):
 
 
 def get_all_template_instance_info():
+    init_graph()
     return [
         get_template_instance_info(instance)
         for instance

@@ -34,6 +34,9 @@ string[] getAllTemplateInstanceInfo() @trusted
 void rdfDiscoverAll()
 {
     GraphRoot gr = GraphRoot.getInstance;
+    gr.dashboardManager.removeAllDashboards;
+    gr.scriptManager.removeAllScripts;
+
     foreach (Json json; getAllTemplateInstanceInfo.map!parseJsonString)
     {
         logInfo(f!"Processing Dashboard %s"(json["dashboard"]["name"].get!string));
@@ -57,5 +60,47 @@ void rdfDiscoverAll()
             gr.scriptManager.createScriptFromJson(scriptJson);
 
         gr.dashboardManager.createDashboardFromJson(json["dashboard"]);
+    }
+}
+
+void rdfDiscoverAndWatchForChanges() nothrow
+{
+    import core.time : seconds;
+    import fswatch;
+    import vibe.core.core : InterruptException, sleep, yield;
+
+    void loop() @trusted
+    {
+        logInfo("Initial rdfDiscoverAll");
+        rdfDiscoverAll;
+
+        FileWatch watcher = FileWatch("static/ontologies/", /*recursive:*/ true);
+
+        while (true)
+        {
+            if (watcher.getEvents.length)
+            {
+                logInfo("Detected change in ontologies dir, re-running rdfDiscoverAll");
+                rdfDiscoverAll;
+            }
+            yield;
+        }
+    }
+
+    try
+    {
+        while (true)
+        {
+            try
+                loop();
+            catch (Exception e)
+                logWarn("rdfDiscoverAndWatchForChanges loop failed: " ~ e.msg);
+
+            sleep(2.seconds);
+        }
+    }
+    catch (Exception e)
+    {
+        logError("rdfDiscoverAndWatchForChanges task failed: " ~ e.msg);
     }
 }
