@@ -1,0 +1,28 @@
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+@prefix this: <http://localhost:3001/ontologies/image/> .
+
+this:Image a rdfs:Class .
+
+    this:url a rdfs:Property ;
+        rdfs:domain this:Image ;
+        rdfs:range xsd:string .
+
+this:PositionOnImage a rdfs:Class .
+
+    this:x a rdfs:Property ;
+        rdfs:domain this:PositionOnImage ;
+        rdfs:range xsd:float .
+
+    this:y a rdfs:Property ;
+        rdfs:domain this:PositionOnImage ;
+        rdfs:range xsd:float .
+
+    this:appliesToImage a rdfs:Property ;
+        rdfs:domain this:PositionOnImage ;
+        rdfs:range this:Image .
+
+    this:hasPositionOnImage a rdfs:Property ;
+        rdfs:domain rdfs:Resource ;
+        rdfs:range this:PositionOnImage .

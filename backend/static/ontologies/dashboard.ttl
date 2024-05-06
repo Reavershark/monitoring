@@ -1,0 +1,73 @@
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+@prefix this: <http://localhost:3001/ontologies/dashboard/> .
+
+this:DashboardTemplate a rdfs:Class .
+
+    this:dashboardTemplateName
+        a rdfs:Property ;
+        rdfs:domain this:DashboardTemplate ;
+        rdfs:range xsd:string .
+
+    this:dashboardTemplateContains
+        a rdfs:Property ;
+        rdfs:domain this:DashboardTemplate ;
+        rdfs:range this:DashboardTemplateArgument ;
+        rdfs:range this:DashboardElement ;
+        rdfs:range this:Script .
+
+this:DashboardTemplateArgument a rdfs:Class .
+
+    this:key
+        a rdfs:Property ;
+        rdfs:domain this:DashboardTemplateArgument ;
+        rdfs:range xsd:string .
+
+this:DashboardElement a rdfs:Class .
+
+    this:dashboardElementDefinition
+        a rdfs:Property ;
+        rdfs:domain this:DashboardElement ;
+        rdfs:range this:string .
+
+    this:dataSource
+        a rdfs:Property ;
+        rdfs:domain this:DashboardElement ;
+        rdfs:range this:Script .
+
+this:Script a rdfs:Class .
+    this:scriptType
+        a rdfs:Property ;
+        rdfs:domain this:Script ;
+        rdfs:range xsd:string .
+    
+    this:scriptSourceCode
+        a rdfs:Property ;
+        rdfs:domain this:Script ;
+        rdfs:range xsd:string .
+
+# DashboardTemplateInstance
+this:DashboardTemplateInstance a rdfs:Class .
+
+    this:instanceOf
+        a rdfs:Property ;
+        rdfs:domain this:DashboardTemplate ;
+        rdfs:range this:DashboardTemplateInstance .
+
+    this:dashboardTemplateInstanceContains
+        a rdfs:Property ;
+        rdfs:domain this:DashboardTemplateInstance ;
+        rdfs:range this:DashboardTemplateArgumentValue .
+
+this:DashboardTemplateArgumentValue a rdfs:Class .
+
+    this:setsArgument
+        a rdfs:Property ;
+        rdfs:domain this:DashboardTemplateArgumentValue ;
+        rdfs:range this:DashboardTemplateArgument .
+
+    this:value
+        a rdfs:Property ;
+        rdfs:domain this:TemplateArgumentValue ;
+        rdfs:range xsd:string .

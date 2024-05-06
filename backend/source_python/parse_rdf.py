@@ -7,7 +7,8 @@ from rdflib.extras.infixowl import Class
 
 base_uri = "http://localhost:3001/ontologies"
 
-CORE = Namespace(f"{base_uri}/core/")
+DASHB = Namespace(f"{base_uri}/dashboard/")
+IMAGE = Namespace(f"{base_uri}/image/")
 
 graph = Graph()
 
@@ -24,6 +25,18 @@ def single_result(it):
     if len(l) >= 2:
         raise Exception("Expected single result, got multiple")
     return l[0]
+
+def subj(pred=None, obj=None, filt=lambda x: True):
+    return single_result(filt(graph.objects(predicate=pred, object=obj)))
+
+def subjs(pred=None, obj=None, filt=lambda x: True):
+    return list(filt(graph.objects(predicate=pred, object=obj)))
+
+def obj(subj=None, pred=None, filt=lambda x: True):
+    return single_result(filt(graph.objects(subject=subj, predicate=pred)))
+
+def objs(subj = None, pred=None, filt=lambda x: True):
+    return list(filt(graph.objects(subject=subj, predicate=pred)))
 
 def rdf_is_sub_class(this: Class, other: Class):
     if other in this.subClassOf:
@@ -42,38 +55,47 @@ def rdf_is_instance(this_uri: URIRef, other_class_uri: URIRef, graph: Graph):
                 return True
     return False
 
-def get_template_instance_info(dashboard_template_instance_uri: URIRef):
-    dashboard_template_uri = single_result(graph.objects(subject=dashboard_template_instance_uri, predicate=CORE.instanceOf))
-    dashboard_template_name = single_result(graph.objects(subject=dashboard_template_uri, predicate=CORE.dashboardTemplateName))
-    dashboard_template_contains_uris = list(graph.objects(subject=dashboard_template_uri, predicate=CORE.dashboardTemplateContains))
-    dashboard_template_instance_contains_uris = list(graph.objects(subject=dashboard_template_instance_uri, predicate=CORE.dashboardTemplateInstanceContains))
-    arg_values = list(filter(lambda x: x in dashboard_template_instance_contains_uris, graph.subjects(predicate=RDF.type, object=CORE.DashboardTemplateArgumentValue)))
+def get_dashb_template_instance_info(templ_inst_uri: URIRef):
+    templ_uri = obj(subj=templ_inst_uri, pred=DASHB.instanceOf)
+    templ_name = obj(subj=templ_uri, pred=DASHB.dashboardTemplateName)
+    templ_contains_uris = objs(subj=templ_uri, pred=DASHB.dashboardTemplateContains)
+    templ_inst_contains_uris = objs(subj=templ_inst_uri, pred=DASHB.dashboardTemplateInstanceContains)
 
-    result = dict()
-    result["args"] = dict()
-    for arg_value_uri in arg_values:
-        arg_uri = single_result(graph.objects(subject=arg_value_uri, predicate=CORE.setsArgument))
-        key = single_result(graph.objects(subject=arg_uri, predicate=CORE.key))
-        value = single_result(graph.objects(subject=arg_value_uri, predicate=CORE.value))
-        result["args"][key] = value
-    result["dashboard"] = dict()
-    result["dashboard"]["name"] = dashboard_template_name
-    result["dashboard"]["uri"] = dashboard_template_instance_uri
-    result["dashboard"]["templateUri"] = dashboard_template_uri
-    result["dashboard"]["elements"] = list()
-    for element_uri in filter(lambda x: x in dashboard_template_contains_uris, graph.subjects(predicate=RDF.type, object=CORE.DashboardElement)):
-        result["dashboard"]["elements"].append({
-            "uri": element_uri,
-            "definition": single_result(graph.objects(subject=element_uri, predicate=CORE.dashboardElementDefinition)),
-            "dataSourceUri": single_result(graph.objects(subject=element_uri, predicate=CORE.dataSource))
-        })
-    result["scripts"] = list()
-    for script_uri in filter(lambda x: x in dashboard_template_contains_uris, graph.subjects(predicate=RDF.type, object=CORE.Script)):
-        result["scripts"].append({
-            "uri": script_uri,
-            "type": single_result(graph.objects(subject=script_uri, predicate=CORE.scriptType)),
-            "source": single_result(graph.objects(subject=script_uri, predicate=CORE.scriptSourceCode))
-        })
+    def get_arg_value_dict():
+        result = dict()
+        value_uris = subjs(predicate=RDF.type, object=DASHB.DashboardTemplateArgumentValue, filt=lambda x: x in templ_inst_contains_uris)
+        for value_uri in value_uris:
+            arg_uri = obj(subj=value_uri, pred=DASHB.setsArgument)
+            key = obj(subj=arg_uri, pred=DASHB.key)
+            value = obj(subj=value_uri, pred=DASHB.value)
+            result[key] = value
+
+    result = {
+        "args": get_arg_value_dict(),
+        "dashboard": {
+            "name": templ_name,
+            "uri": templ_inst_uri,
+            "templateUri": templ_uri,
+            "elements": [
+                {
+                    "uri": element_uri,
+                    "definition": obj(subj=element_uri, pred=DASHB.dashboardElementDefinition),
+                    "dataSourceUri": obj(subj=element_uri, pred=DASHB.dataSource)
+                }
+                for element_uri in
+                subjs(pred=RDF.type, obj=DASHB.DashboardElement, filt=lambda x: x in templ_contains_uris)
+            ]
+        },
+        "scripts": [
+            {
+                "uri": script_uri,
+                "type": single_result(graph.objects(subject=script_uri, predicate=DASHB.scriptType)),
+                "source": single_result(graph.objects(subject=script_uri, predicate=DASHB.scriptSourceCode))
+            }
+            for script_uri in
+            subjs(pred=RDF.type, obj=DASHB.Script, filt=lambda x: x in templ_contains_uris)
+        ]
+    }
 
     return json.dumps(result)
 
@@ -82,9 +104,9 @@ def get_all_template_instance_info():
     try:
         init_graph()
         return [
-            get_template_instance_info(instance)
-            for instance
-            in graph.subjects(predicate=RDF.type, object=CORE.DashboardTemplateInstance)
+            get_dashb_template_instance_info(instance)
+            for instance in
+            subjs(pred=RDF.type, obj=DASHB.DashboardTemplateInstance)
         ]
     except Exception as e:
         print("get_all_template_instance_info failed:", e)
