@@ -2,15 +2,15 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix sosa: <http://www.w3.org/ns/sosa/> .
 
-@prefix dashboard: <http://localhost:3001/ontologies/dashboard/> .
+@prefix dashb: <http://localhost:3001/ontologies/dashboard/> .
 @prefix image: <http://localhost:3001/ontologies/image/> .
 @prefix ul: <http://localhost:3001/ontologies/external/urenloop/> .
 
 @prefix this: <http://localhost:3001/ontologies/external/10urenloop/> .
 
 this:satteliteImage
-    a dashboard:Image ;
-    dashboard:url "http://localhost:3001/images/10urenloop.jpg" .
+    a image:Image ;
+    image:url "http://localhost:3001/images/10urenloop.jpg" .
 
 this:s1
     a ul:Station ;

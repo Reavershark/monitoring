@@ -1,17 +1,18 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
-@prefix core: <http://localhost:3001/ontologies/core/> .
+@prefix dashb: <http://localhost:3001/ontologies/dashboard/> .
+@prefix image: <http://localhost:3001/ontologies/image/> .
 
 @prefix dashboard1: <http://localhost:3001/ontologies/templates/dashboard1/> .
 
 @prefix this: <http://localhost:3001/ontologies/template_instances/dashboard1_inst1/> .
 
 this:instance
-    a core:DashboardTemplateInstance ;
-    core:instanceOf dashboard1:template ;
-    core:dashboardTemplateInstanceContains this:arg_polygon_value .
+    a dashb:DashboardTemplateInstance ;
+    dashb:instanceOf dashboard1:template ;
+    dashb:dashboardTemplateInstanceContains this:arg_polygon_value .
 
 this:arg_polygon_value
-    a core:DashboardTemplateArgumentValue ;
-    core:setsArgument dashboard1:arg_polygon ;
-    core:value "[[0,0], [0,10], [50,10]]" .
+    a dashb:DashboardTemplateArgumentValue ;
+    dashb:setsArgument dashboard1:arg_polygon ;
+    dashb:value "[[0,0], [0,10], [50,10]]" .

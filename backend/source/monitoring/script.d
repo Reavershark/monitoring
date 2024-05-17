@@ -1,9 +1,10 @@
 module monitoring.script;
 
 import monitoring.resource_graph.graph : GraphNode;
-import monitoring.resource_graph.mixins;
-import monitoring.util.temp_file : TempFile;
+import monitoring.resource_graph.mixins : graphNodeMixin;
+import monitoring.util.meta : Pack;
 import monitoring.util.string : b64EncodeString;
+import monitoring.util.temp_file : TempFile;
 
 import std.array : join;
 import std.conv : octal, to;
@@ -119,8 +120,6 @@ final class Script : GraphNode
         ]);
     }
 
-    mixin queryMixin!(run);
-
     Json toJson() const
     {
         Json json = Json.emptyObject;
@@ -141,15 +140,15 @@ final class Script : GraphNode
         );
         return instance;
     }
+
+    mixin graphNodeMixin!(
+        Pack!(run),
+    );
 }
 
 final class ScriptManager : GraphNode
 {
     private Script[string] m_scripts;
-
-    this()
-    {
-    }
 
     string[] listScripts() const
     {
@@ -189,7 +188,7 @@ final class ScriptManager : GraphNode
         m_scripts.remove(uri);
     }
 
-    mixin queryMixin!(
-        listScripts, getScript,
+    mixin graphNodeMixin!(
+        Pack!(listScripts, getScript),
     );
 }

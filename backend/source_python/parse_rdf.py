@@ -1,5 +1,6 @@
 import json
 import os
+import traceback
 from pathlib import Path
 from rdflib import Graph, Literal, Namespace, URIRef
 from rdflib.namespace import RDF, RDFS, SOSA, SSN, XSD
@@ -27,16 +28,16 @@ def single_result(it):
     return l[0]
 
 def subj(pred=None, obj=None, filt=lambda x: True):
-    return single_result(filt(graph.objects(predicate=pred, object=obj)))
+    return single_result(filter(filt, graph.subjects(predicate=pred, object=obj)))
 
 def subjs(pred=None, obj=None, filt=lambda x: True):
-    return list(filt(graph.objects(predicate=pred, object=obj)))
+    return list(filter(filt, graph.subjects(predicate=pred, object=obj)))
 
 def obj(subj=None, pred=None, filt=lambda x: True):
-    return single_result(filt(graph.objects(subject=subj, predicate=pred)))
+    return single_result(filter(filt, graph.objects(subject=subj, predicate=pred)))
 
 def objs(subj = None, pred=None, filt=lambda x: True):
-    return list(filt(graph.objects(subject=subj, predicate=pred)))
+    return list(filter(filt, graph.objects(subject=subj, predicate=pred)))
 
 def rdf_is_sub_class(this: Class, other: Class):
     if other in this.subClassOf:
@@ -63,12 +64,13 @@ def get_dashb_template_instance_info(templ_inst_uri: URIRef):
 
     def get_arg_value_dict():
         result = dict()
-        value_uris = subjs(predicate=RDF.type, object=DASHB.DashboardTemplateArgumentValue, filt=lambda x: x in templ_inst_contains_uris)
+        value_uris = subjs(pred=RDF.type, obj=DASHB.DashboardTemplateArgumentValue, filt=lambda x: x in templ_inst_contains_uris)
         for value_uri in value_uris:
             arg_uri = obj(subj=value_uri, pred=DASHB.setsArgument)
             key = obj(subj=arg_uri, pred=DASHB.key)
             value = obj(subj=value_uri, pred=DASHB.value)
             result[key] = value
+        return result
 
     result = {
         "args": get_arg_value_dict(),
@@ -80,21 +82,21 @@ def get_dashb_template_instance_info(templ_inst_uri: URIRef):
                 {
                     "uri": element_uri,
                     "definition": obj(subj=element_uri, pred=DASHB.dashboardElementDefinition),
-                    "dataSourceUri": obj(subj=element_uri, pred=DASHB.dataSource)
+                    "dataSourceUri": obj(subj=element_uri, pred=DASHB.dataSource),
                 }
                 for element_uri in
                 subjs(pred=RDF.type, obj=DASHB.DashboardElement, filt=lambda x: x in templ_contains_uris)
-            ]
+            ],
         },
         "scripts": [
             {
                 "uri": script_uri,
-                "type": single_result(graph.objects(subject=script_uri, predicate=DASHB.scriptType)),
-                "source": single_result(graph.objects(subject=script_uri, predicate=DASHB.scriptSourceCode))
+                "type": obj(subj=script_uri, pred=DASHB.scriptType),
+                "source": obj(subj=script_uri, pred=DASHB.scriptSourceCode),
             }
             for script_uri in
             subjs(pred=RDF.type, obj=DASHB.Script, filt=lambda x: x in templ_contains_uris)
-        ]
+        ],
     }
 
     return json.dumps(result)
@@ -110,3 +112,4 @@ def get_all_template_instance_info():
         ]
     except Exception as e:
         print("get_all_template_instance_info failed:", e)
+        print(traceback.format_exc())

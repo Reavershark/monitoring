@@ -2,14 +2,16 @@ module monitoring.dashboard;
 
 import monitoring.resource_graph.graph : GraphNode;
 import monitoring.resource_graph.graph_root : GraphRoot;
-import monitoring.resource_graph.mixins : queryMixin;
+import monitoring.resource_graph.mixins : graphNodeMixin;
 import monitoring.script : Script;
+import monitoring.util.meta : Pack;
 
-import std.algorithm : map;
+import std.algorithm : canFind, map, remove, countUntil;
 import std.array : array;
 import std.exception : enforce;
+import std.meta : AliasSeq;
 
-import vibe.data.json : Json;
+import vibe.data.json : Json, serializeToJson;
 
 @safe:
 
@@ -27,10 +29,6 @@ final class Dashboard : GraphNode
     string uri() const pure => m_uri;
     DashboardElement[] elements() pure => m_elements;
 
-    mixin queryMixin!(
-        uri, elements,
-    );
-
     Json toJson() const
     {
         Json json = Json.emptyObject;
@@ -43,10 +41,16 @@ final class Dashboard : GraphNode
     {
         auto instance = new typeof(this)(
             json["uri"].get!string,
-            json["elements"].get!(Json[]).map!(j => DashboardElement.fromJson(j)).array,
+            json["elements"].get!(Json[])
+                .map!(j => DashboardElement.fromJson(j))
+                .array,
         );
         return instance;
     }
+
+    mixin graphNodeMixin!(
+        Pack!(uri, elements),
+    );
 }
 
 final class DashboardElement : GraphNode
@@ -86,29 +90,30 @@ final class DashboardElement : GraphNode
         return instance;
     }
 
-    mixin queryMixin!(uri, definition, dataSourceUri, dataSource);
+    mixin graphNodeMixin!(
+        Pack!(uri, definition, dataSourceUri, dataSource),
+    );
 }
 
 final class DashboardManager : GraphNode
 {
     private Dashboard[string] m_dashboards;
 
-    this()
-    {
-    }
-
-    string[] listDashboards() const
-    {
-        return m_dashboards.keys;
-    }
+    string[] listDashboards() const pure => m_dashboards.keys;
 
     void removeAllDashboards()
     {
+        scope (success)
+            raiseDashboardsChanged;
+
         m_dashboards = null;
     }
 
     Dashboard createDashboardFromJson(Json json)
     {
+        scope (success)
+            raiseDashboardsChanged;
+
         enforce(json["uri"].get!string !in m_dashboards);
         Dashboard dashboard = Dashboard.fromJson(json);
         m_dashboards[dashboard.uri] = dashboard;
@@ -123,11 +128,21 @@ final class DashboardManager : GraphNode
 
     void removeDashboard(string uri)
     {
+        scope (success)
+            raiseDashboardsChanged;
+
         enforce(uri in m_dashboards);
         m_dashboards.remove(uri);
     }
 
-    mixin queryMixin!(
-        listDashboards, getDashboard,
+    void raiseDashboardsChanged()
+    {
+        immutable Json eventData = listDashboards.serializeToJson;
+        raise!"dashboardsChanged"(eventData);
+    }
+
+    mixin graphNodeMixin!(
+        Pack!(listDashboards, getDashboard),
+        ["dashboardsChanged"],
     );
 }

@@ -1,19 +1,20 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
-@prefix core: <http://localhost:3001/ontologies/core/> .
+@prefix dashb: <http://localhost:3001/ontologies/dashboard/> .
+@prefix image: <http://localhost:3001/ontologies/image/> .
 
 @prefix this: <http://localhost:3001/ontologies/templates/dashboard1/> .
 
 this:template
-    a core:DashboardTemplate ;
-    core:dashboardTemplateName "Dashboard 1" ;
-    core:dashboardTemplateContains this:arg_polygon ;
-    core:dashboardTemplateContains this:element1 ;
-    core:dashboardTemplateContains this:script1 .
+    a dashb:DashboardTemplate ;
+    dashb:dashboardTemplateName "Dashboard 1" ;
+    dashb:dashboardTemplateContains this:arg_polygon ;
+    dashb:dashboardTemplateContains this:element1 ;
+    dashb:dashboardTemplateContains this:script1 .
 
 this:arg_polygon
-    a core:DashboardTemplateArgument ;
-    core:key "polygon" .
+    a dashb:DashboardTemplateArgument ;
+    dashb:key "polygon" .
 
 # Bottom left:  51.23537974419859, 4.401279225086746 ; 1340, 1015
 # Left:         51.23602973449899, 4.400688053259243 ; 730, 640
@@ -25,8 +26,8 @@ this:arg_polygon
 # => 3.4305 * 10^-6 coordinate per pixel (x)
 
 this:element1
-    a core:DashboardElement ;
-    core:dashboardElementDefinition """
+    a dashb:DashboardElement ;
+    dashb:dashboardElementDefinition """
 {
     "title": {
         "text": "My chart"
@@ -92,9 +93,9 @@ this:element1
     }
 }
 """ ;
-    core:dataSource this:script1 .
+    dashb:dataSource this:script1 .
 
 this:script1
-    a core:Script ;
-    core:scriptType "shell" ;
-    core:scriptSourceCode "echo \"Hello World\"" .
+    a dashb:Script ;
+    dashb:scriptType "shell" ;
+    dashb:scriptSourceCode "echo \"Hello World\"" .

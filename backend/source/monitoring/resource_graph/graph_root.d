@@ -2,8 +2,9 @@ module monitoring.resource_graph.graph_root;
 
 import monitoring.dashboard : DashboardManager;
 import monitoring.resource_graph.graph : GraphNode;
-import monitoring.resource_graph.mixins : queryMixin;
+import monitoring.resource_graph.mixins : graphNodeMixin;
 import monitoring.script : ScriptManager;
+import monitoring.util.meta : Pack;
 
 import std.conv : to;
 import std.exception : enforce;
@@ -37,7 +38,7 @@ final class GraphRoot : GraphNode
     ScriptManager scriptManager() pure => m_scriptManager;
     DashboardManager dashboardManager() pure => m_dashboardManager;
 
-    mixin queryMixin!(
-        scriptManager, dashboardManager,
+    mixin graphNodeMixin!(
+        Pack!(scriptManager, dashboardManager),
     );
 }

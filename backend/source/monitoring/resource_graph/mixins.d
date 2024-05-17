@@ -3,20 +3,23 @@
  */
 module monitoring.resource_graph.mixins;
 
-import monitoring.resource_graph.graph;
+import monitoring.util.meta : Pack;
+
+import std.traits : isInstanceOf;
 
 @safe:
 
 /** 
  * When mixed into a class, this template provides a `query` method as in the GraphNode interface.
  * Params:
- *   Methods: List of final methods of the current class that return a string (usually json).
+ *   MethodsPack: Pack of final methods of the current class that return a string (usually json).
  */
-template queryMixin(Methods...) if (Methods.length > 0)
+template graphNodeMixin(alias MethodsPack, string[] events = [])
+        if (isInstanceOf!(Pack, MethodsPack))
 {
-    import monitoring.resource_graph.graph : GraphNode, GraphPathSegment;
+    import monitoring.resource_graph.graph : GraphNode, GraphPathSegment, GraphSubscriber, implementsGraphNode;
 
-    import std.algorithm : map, startsWith;
+    import std.algorithm : canFind, map, startsWith;
     import std.conv : to;
     import std.exception : enforce;
     import std.format : f = format;
@@ -27,34 +30,26 @@ template queryMixin(Methods...) if (Methods.length > 0)
 
     import vibe.data.json : deserializeJson, Json, serializeToJson, serializeToJsonString;
 
-    SumType!(GraphNode, Json) query(in GraphPathSegment segment, bool lastSegment)
+    static assert(implementsGraphNode!(typeof(this)), "mixin not in a class body");
+    static foreach (Method; MethodsPack.Unpack)
+        static assert(isFinalFunction!Method, f!`Not a final method: "%s"`(Method.stringof));
+    static foreach (event; events)
+        static assert(event.length, f!`Invalid event: "%s"`(event));
+
+    private bool[GraphSubscriber][string] m_subscribersPerEvent;
+
+    SumType!(GraphNode, Json) query(in GraphPathSegment segment, in bool lastSegment)
     {
-        enum bool implementsGraphNodeImpl(T : GraphNode) = true;
-        enum bool implementsGraphNode(T) = __traits(compiles, implementsGraphNodeImpl!T);
-
-        static foreach (Method; Methods)
-        {
-            {
-                static assert(isFinalFunction!Method);
-                enum returnsGraphNode = implementsGraphNode!(ReturnType!Method);
-                enum returnsJsonSerializable = __traits(compiles, {
-                        ReturnType!Method a;
-                        Json b = a.serializeToJson;
-                    }) || is(ReturnType!Method == void);
-                static assert(returnsGraphNode || returnsJsonSerializable);
-            }
-        }
-
         switch (segment.name)
         {
             // Each case converts the segment.args to the types expected by the method segment.name.
             // Then it calls the method with name segment.name with those arguments and returns the result.
-            static foreach (Method; Methods)
+            static foreach (Method; MethodsPack.Unpack)
             {
         case __traits(identifier, Method): // case MethodName
                 // This extra scope is just so we can reuse local variable names
                 {
-                    const string MethodName = __traits(identifier, Method);
+                    enum string MethodName = __traits(identifier, Method);
                     alias MethodArgCount = arity!Method;
                     alias MethodArgTypes = Parameters!Method;
                     alias MethodReturnType = ReturnType!Method;
@@ -77,40 +72,20 @@ template queryMixin(Methods...) if (Methods.length > 0)
                     }
 
                     // Generate argument list string ("arg_0, arg_1, ...")
-                    const string argsToMixin = iota(MethodArgCount)
-                        .map!(i => f!"arg_%d"(i))
-                        .join(", ");
-
-                    enum callCode = f!"%s(%s)"(MethodName, argsToMixin);
-
-                    // dfmt off
-                    enum returnGraphNodeCode = f!"return typeof(return)(cast(GraphNode) %s);"(callCode);
-                    enum returnVoidCode = f!"%s; return typeof(return)(serializeToJson(null));"(callCode);
-                    enum returnJsonCode = f!"return typeof(return)(serializeToJson(%s));"(callCode);
-                    // dfmt on
+                    enum string argsToMixin = iota(MethodArgCount)
+                            .map!(i => f!"arg_%d"(i))
+                            .join(", ");
 
                     // Finally, generate the method call
+                    MethodReturnType methodResult = mixin(f!"%s(%s)"(MethodName, argsToMixin));
+
                     static if (implementsGraphNode!(ReturnType!Method))
-                    {
                         if (!lastSegment)
-                        {
-                            mixin(returnGraphNodeCode);
-                        }
-                        else
-                        {
-                            static if (is(ReturnType!Method == void))
-                                mixin(returnVoidCode);
-                            else
-                                mixin(returnJsonCode);
-                        }
-                    }
+                            return typeof(return)(cast(GraphNode) methodResult);
+                    static if (is(ReturnType!Method == void))
+                        return typeof(return)(serializeToJson(null));
                     else
-                    {
-                        static if (is(ReturnType!Method == void))
-                            mixin(returnVoidCode);
-                        else
-                            mixin(returnJsonCode);
-                    }
+                        return typeof(return)(serializeToJson(methodResult));
                 }
             }
 
@@ -118,23 +93,37 @@ template queryMixin(Methods...) if (Methods.length > 0)
             throw new Exception(f!"Invalid method name %s"(segment.name));
         }
     }
-}
 
-template emptyQueryMixin()
-{
-    import monitoring.resource_graph.graph : GraphNode, GraphPathSegment;
-
-    import std.sumtype : SumType;
-
-    import vibe.data.json : Json;
-
-    SumType!(GraphNode, Json) query(in GraphPathSegment _, bool isLastSegment)
+    void subscribe(GraphSubscriber subscriber, string event)
     {
-        assert(false, "This GraphNode has no query methods");
+        enforce(events.canFind(event), "Invalid event");
+
+        bool[GraphSubscriber] subscribers = m_subscribersPerEvent.require(event);
+        enforce(subscriber !in subscribers, "Already subscribed");
+        subscribers[subscriber] = true;
+    }
+
+    void unsubscribe(GraphSubscriber subscriber, string event)
+    {
+        enforce(events.canFind(event), "Invalid event");
+
+        bool[GraphSubscriber] subscribers = m_subscribersPerEvent.require(event);
+        enforce(subscriber in subscribers, "Not subscribed");
+        subscribers.remove(subscriber);
+    }
+
+    private void raise(string event)(in Json eventData) if (events.canFind(event))
+    {
+        bool[GraphSubscriber] subscribers = m_subscribersPerEvent.require(event);
+        GraphSubscriber[] failed;
+        foreach (subscriber; subscribers.byKey)
+            subscriber.sendEvent(event, eventData);
+        foreach (subscriber; failed)
+            subscribers.remove(subscriber);
     }
 }
 
-@("Test queryMixin")
+@("Test graphNodeMixin")
 unittest
 {
     import vibe.data.json : Json;
@@ -150,7 +139,7 @@ unittest
             return null;
         }
 
-        mixin resolveMixin!foo;
+        mixin graphNodeMixin!foo;
     }
 
     A a = new A;

@@ -4,7 +4,7 @@
  */
 module monitoring.resource_graph.graph;
 
-import vibe.data.json : Json;
+import monitoring.util.meta : Pack;
 
 import std.algorithm : map;
 import std.array : array;
@@ -12,10 +12,11 @@ import std.conv : to;
 import std.exception : enforce;
 import std.format : f = format;
 import std.string : capitalize;
+import std.sumtype : match, SumType;
 import std.uni : isAlpha, isAlphaNum;
-import std.sumtype : SumType, match;
 
 import vibe.core.log;
+import vibe.data.json : Json;
 
 @safe:
 
@@ -64,6 +65,12 @@ Request parseRequest(in Json jsonReq)
     return req;
 }
 
+interface GraphSubscriber
+{
+    /// False result indicates failiure, might want to unsubscribe/discard of delegate.
+    bool sendEvent(in string event, in Json eventData);
+}
+
 interface GraphNode
 {
     /** 
@@ -72,32 +79,16 @@ interface GraphNode
      *   segment = The last segment of a Query, with type = Method.
      * Returns: The result of the method referred to by `segment`.
      */
-    SumType!(GraphNode, Json) query(in GraphPathSegment segment, bool isLastSegment);
+    SumType!(GraphNode, Json) query(in GraphPathSegment segment, in bool lastSegment);
 
-    /** 
-     * Every time the signal referred to by `segment` is triggered, calls hook with the value of that signal.
-     * Calling this multiple times with the same hook will result in that hook also being called multiple times when the
-     * signal triggers.
-     * Params:
-     *   segment = The last segment of a Query, with type = Signal.
-     *   hook = A delegate referring to a class method with signature "void method(string)".
-     */
-    // void subscribe(in GraphPathSegment segment, void delegate(string) hook);
+    void subscribe(GraphSubscriber subscriber, string event);
 
-    /**
-     * Removes a hook from the call list of the signal referred to by `segment`.
-     * If a hook was added multiple times with multiple `subscribe` calls, all those subscriptions will be undone.
-     * Params:
-     *   segment = The last segment of a Query, with type = Signal.
-     *   hook = A delegate referring to a class method with signature "void method(string)".
-     */
-    // void unsubscribe(in GraphPathSegment segment, void delegate(string) hook);
-
-    /*
-     * Serialize to json.
-     */
-    // Json toJson() const; // optional
+    void unsubscribe(GraphSubscriber subscriber, string event);
 }
+
+
+private enum bool implementsGraphNodeImpl(T : GraphNode) = true;
+enum bool implementsGraphNode(T) = __traits(compiles, implementsGraphNodeImpl!T);
 
 //                 //
 // Graph traveling //
@@ -107,8 +98,9 @@ interface GraphNode
  * Travels the graph with a valid Request object.
  * Returns: A json string
  */
-Json executeRequest(in Request req, GraphNode root) nothrow @trusted
-in (root !is null)
+Json executeRequest(in Request req, GraphNode graphRoot, GraphSubscriber graphSubscriber) nothrow @trusted
+in (graphRoot !is null)
+in (graphSubscriber !is null)
 {
     try
     {
@@ -116,20 +108,17 @@ in (root !is null)
 
         enforce(req.path.length >= 1);
 
-        GraphNode curr = root;
+        GraphNode curr = graphRoot;
         foreach (i, segment; req.path)
         {
             bool isLastSegment = (i + 1 == req.path.length);
 
             if (!isLastSegment)
             {
-                logDebug(f!"Current node: %s"(curr));
-                curr = curr.query(segment, isLastSegment)
-                    .match!(
-                        (GraphNode n) => n,
-                        _ => assert(false),
+                curr = curr.query(segment, isLastSegment).match!(
+                    (GraphNode n) => n,
+                    _ => assert(false),
                 );
-                logDebug(f!"Current node: %s"(curr));
                 enforce(curr !is null);
             }
             else
@@ -142,9 +131,11 @@ in (root !is null)
                         _ => assert(false),
                     );
                 case RequestType.Subscribe:
-                    throw new Exception("subscribe not implemented"); //curr.subscribe(segment);
+                    curr.subscribe(graphSubscriber, segment.name);
+                    return Json(null);
                 case RequestType.Unsubscribe:
-                    throw new Exception("unsubscribe not implemented"); //curr.unsubscribe(segment);
+                    curr.unsubscribe(graphSubscriber, segment.name);
+                    return Json(null);
                 }
             }
         }
@@ -159,32 +150,20 @@ in (root !is null)
     assert(false);
 }
 
-@("Test handleRequest accepting root node")
+@("Test executeRequest accepting root node")
 unittest
 {
-    import monitoring.resource_graph.mixins;
+    import monitoring.resource_graph.mixins : graphNodeMixin;
 
     final class RootNode : GraphNode
     {
-        int[] graph_foo()
-        {
-            return [0, 1, 2];
-        }
+        int[] foo() => [0, 1, 2];
 
-        mixin emptyResolveMixin;
-        mixin queryMixin!graph_foo;
-
-        void subscribe(GraphPathSegment segment, void delegate(string) hook)
-        {
-        }
-
-        void unsubscribe(GraphPathSegment segment, void delegate(string) hook)
-        {
-        }
+        mixin graphNodeMixin!foo;
     }
 
     RootNode root = new RootNode;
     auto req = Request(RequestType.Query, [GraphPathSegment("foo")]);
-    Json s = executeRequest(req, root);
+    Json s = executeRequest(req, root, null);
     assert(s == Json([Json(0), Json(1), Json(2)]));
 }

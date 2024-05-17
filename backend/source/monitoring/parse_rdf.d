@@ -44,6 +44,9 @@ void rdfDiscoverAll()
 
         string replaceTemplateVars(in string s)
         {
+            if (json["args"].type is Json.Type.null_)
+                return s;
+
             string result = s.dup;
             foreach (string key, Json jsonValue; json["args"].get!(Json[string]))
             {
@@ -94,7 +97,10 @@ void rdfDiscoverAndWatchForChanges() nothrow
             try
                 loop();
             catch (Exception e)
+            {
                 logWarn("rdfDiscoverAndWatchForChanges loop failed: " ~ e.msg);
+                logWarn((() @trusted => e.info.toString)());
+            }
 
             sleep(2.seconds);
         }

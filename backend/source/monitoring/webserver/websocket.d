@@ -1,6 +1,6 @@
 module monitoring.webserver.websocket;
 
-import monitoring.resource_graph.graph : executeRequest, parseRequest, Request;
+import monitoring.resource_graph.graph : executeRequest, GraphSubscriber, parseRequest, Request;
 import monitoring.resource_graph.graph_root : GraphRoot;
 
 import vibe.core.log;
@@ -13,7 +13,7 @@ import std.stdio : writeln, writefln;
 
 @safe:
 
-class WebSocketHandler
+class WebSocketHandler : GraphSubscriber
 {
     private WebSocket m_ws;
 
@@ -72,9 +72,27 @@ class WebSocketHandler
         Request req = parseRequest(msg);
         writefln!"Parsed msg: %s"(req);
 
-        Json result = executeRequest(req, GraphRoot.getInstance);
+        Json result = executeRequest(req, GraphRoot.getInstance, this);
         writefln!"Result: %s"(result);
 
         return result;
+    }
+
+    bool sendEvent(in string event, in Json eventData)
+    {
+        if (!m_ws.connected)
+            return false;
+
+        Json toSend = Json([
+            "event": Json(event),
+            "eventData": eventData,
+        ]);
+
+        try
+            m_ws.send(toSend.toString);
+        catch (Exception e)
+            return false;
+
+        return true;
     }
 }
